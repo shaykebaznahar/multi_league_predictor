@@ -18,11 +18,11 @@ print("📂 Loading models and stats...")
 
 try:
     current_file = os.path.join(stats_folder, 'All_Matches_current_with_Percentiles_2025_Current.xlsx')
-    all_stats_df = pd.read_excel(current_file)
-    print(f"✅ Loaded current stats file: {all_stats_df.shape[0]} rows")
+    all_matches_df = pd.read_excel(current_file)
+    print(f"✅ Loaded current stats file: {all_matches_df.shape[0]} rows")
 except Exception as e:
     print(f"❌ Error loading current stats: {e}")
-    all_stats_df = None
+    all_matches_df = None
 
 for model_file in os.listdir(models_folder):
     if model_file.startswith('model_') and model_file.endswith('.pkl'):
@@ -32,38 +32,32 @@ for model_file in os.listdir(models_folder):
             with open(os.path.join(models_folder, model_file), 'rb') as f:
                 model = pickle.load(f)
             
-            if all_stats_df is not None:
-                league_stats = all_stats_df[all_stats_df['Div'] == league].copy()
+            if all_matches_df is not None:
+                league_matches = all_matches_df[all_matches_df['Div'] == league].copy()
                 
-                if len(league_stats) > 0:
-                    league_stats = league_stats.dropna(subset=['Home_Percentile', 'Away_Percentile'])
+                if len(league_matches) > 0:
+                    home_avg = league_matches.groupby('HomeTeam').mean()
+                    away_avg = league_matches.groupby('AwayTeam').mean()
                     
-                    if len(league_stats) > 0:
-                        home_stats = league_stats.copy()
-                        away_stats = league_stats.copy()
-                        
-                        if 'HomeTeam' in home_stats.columns:
-                            home_stats = home_stats.set_index('HomeTeam')
-                            away_stats = away_stats.set_index('AwayTeam')
-                        elif 'Team' in home_stats.columns:
-                            home_stats = home_stats.set_index('Team')
-                            away_stats = away_stats.set_index('Team')
-                        
-                        home_teams = set(home_stats.index)
-                        away_teams = set(away_stats.index)
+                    home_avg = home_avg.dropna(subset=['Home_Percentile'])
+                    away_avg = away_avg.dropna(subset=['Away_Percentile'])
+                    
+                    if len(home_avg) > 0 and len(away_avg) > 0:
+                        home_teams = set(home_avg.index)
+                        away_teams = set(away_avg.index)
                         all_teams = sorted(list(home_teams | away_teams))
                         
                         LEAGUES[league] = {
                             'model': model,
-                            'home_stats': home_stats,
-                            'away_stats': away_stats,
+                            'home_stats': home_avg,
+                            'away_stats': away_avg,
                             'teams': all_teams
                         }
                         print(f"✅ {league}: Model + Stats loaded ({len(all_teams)} teams)")
                     else:
-                        print(f"⚠️  {league}: No stats with percentiles found")
+                        print(f"⚠️  {league}: No valid stats found")
                 else:
-                    print(f"⚠️  {league}: No stats found")
+                    print(f"⚠️  {league}: No matches found")
         except Exception as e:
             print(f"❌ {league}: Error - {str(e)}")
 
@@ -129,11 +123,6 @@ def predict(league):
         
         home_team_stats = home_stats.loc[home_team]
         away_team_stats = away_stats.loc[away_team]
-        
-        if isinstance(home_team_stats, pd.DataFrame):
-            home_team_stats = home_team_stats.iloc[0]
-        if isinstance(away_team_stats, pd.DataFrame):
-            away_team_stats = away_team_stats.iloc[0]
         
         future_match = pd.DataFrame({
             feature: [home_team_stats[feature]] if feature.startswith('H') else [away_team_stats[feature]]
