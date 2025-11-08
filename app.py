@@ -36,8 +36,13 @@ for model_file in os.listdir(models_folder):
                 league_matches = all_matches_df[all_matches_df['Div'] == league].copy()
                 
                 if len(league_matches) > 0:
-                    home_avg = league_matches.groupby('HomeTeam').mean()
-                    away_avg = league_matches.groupby('AwayTeam').mean()
+                    numeric_cols = league_matches.select_dtypes(include=['number']).columns
+                    league_numeric = league_matches[numeric_cols].copy()
+                    league_numeric['HomeTeam'] = league_matches['HomeTeam']
+                    league_numeric['AwayTeam'] = league_matches['AwayTeam']
+                    
+                    home_avg = league_numeric.groupby('HomeTeam')[numeric_cols].mean()
+                    away_avg = league_numeric.groupby('AwayTeam')[numeric_cols].mean()
                     
                     home_avg = home_avg.dropna(subset=['Home_Percentile'])
                     away_avg = away_avg.dropna(subset=['Away_Percentile'])
