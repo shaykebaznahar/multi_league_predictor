@@ -35,23 +35,32 @@ for model_file in os.listdir(models_folder):
                 league_stats = all_stats_df[all_stats_df['Div'] == league].copy()
                 
                 if len(league_stats) > 0:
-                    home_stats = league_stats.copy()
-                    away_stats = league_stats.copy()
+                    league_stats = league_stats.dropna(subset=['Home_Percentile', 'Away_Percentile'])
                     
-                    if 'HomeTeam' in home_stats.columns:
-                        home_stats = home_stats.set_index('HomeTeam')
-                        away_stats = away_stats.set_index('AwayTeam')
-                    elif 'Team' in home_stats.columns:
-                        home_stats = home_stats.set_index('Team')
-                        away_stats = away_stats.set_index('Team')
-                    
-                    LEAGUES[league] = {
-                        'model': model,
-                        'home_stats': home_stats,
-                        'away_stats': away_stats,
-                        'teams': sorted(list(set(list(home_stats.index) + list(away_stats.index))))
-                    }
-                    print(f"✅ {league}: Model + Stats loaded ({len(LEAGUES[league]['teams'])} teams)")
+                    if len(league_stats) > 0:
+                        home_stats = league_stats.copy()
+                        away_stats = league_stats.copy()
+                        
+                        if 'HomeTeam' in home_stats.columns:
+                            home_stats = home_stats.set_index('HomeTeam')
+                            away_stats = away_stats.set_index('AwayTeam')
+                        elif 'Team' in home_stats.columns:
+                            home_stats = home_stats.set_index('Team')
+                            away_stats = away_stats.set_index('Team')
+                        
+                        home_teams = set(home_stats.index)
+                        away_teams = set(away_stats.index)
+                        all_teams = sorted(list(home_teams | away_teams))
+                        
+                        LEAGUES[league] = {
+                            'model': model,
+                            'home_stats': home_stats,
+                            'away_stats': away_stats,
+                            'teams': all_teams
+                        }
+                        print(f"✅ {league}: Model + Stats loaded ({len(all_teams)} teams)")
+                    else:
+                        print(f"⚠️  {league}: No stats with percentiles found")
                 else:
                     print(f"⚠️  {league}: No stats found in combined file")
         except Exception as e:
@@ -121,9 +130,9 @@ def predict(league):
         away_team_stats = away_stats.loc[away_team]
         
         if isinstance(home_team_stats, pd.DataFrame):
-            home_team_stats = home_team_stats.mean()
+            home_team_stats = home_team_stats.iloc[0]
         if isinstance(away_team_stats, pd.DataFrame):
-            away_team_stats = away_team_stats.mean()
+            away_team_stats = away_team_stats.iloc[0]
         
         future_match = pd.DataFrame({
             feature: [home_team_stats[feature]] if feature.startswith('H') else [away_team_stats[feature]]
@@ -134,36 +143,38 @@ def predict(league):
         pred = model.predict(future_match)
         pred_proba = model.predict_proba(future_match)
         
-        prob_away = float(pred_proba[0][0]) if len(pred_proba[0]) > 0 else 0
-        prob_draw = float(pred_proba[0][1]) if len(pred_proba[0]) > 1 else 0
-        prob_home = float(pred_proba[0][2]) if len(pred_proba[0]) > 2 else 0
+        prob_away = float(pred_proba[0][0]) if pred_proba.shape[1] > 0 else 0
+        prob_draw = float(pred_proba[0][1]) if pred_proba.shape[1] > 1 else 0
+        prob_home = float(pred_proba[0][2]) if pred_proba.shape[1] > 2 else 0
         
         result = {
             'league': league,
             'league_name': LEAGUE_NAMES.get(league, league),
             'home_team': home_team,
             'away_team': away_team,
-            'prediction': pred[0],
+            'prediction': str(pred[0]),
             'probabilities': {
-                'H': prob_home,
-                'D': prob_draw,
-                'A': prob_away
+                'H': round(prob_home * 100, 1),
+                'D': round(prob_draw * 100, 1),
+                'A': round(prob_away * 100, 1)
             },
             'home_stats': {
-                'HS': float(home_team_stats['HS']) if 'HS' in home_team_stats.index else 0,
-                'HST': float(home_team_stats['HST']) if 'HST' in home_team_stats.index else 0,
-                'HC': float(home_team_stats['HC']) if 'HC' in home_team_stats.index else 0,
-                'HF': float(home_team_stats['HF']) if 'HF' in home_team_stats.index else 0,
-                'HY': float(home_team_stats['HY']) if 'HY' in home_team_stats.index else 0,
-                'Home_Percentile': float(home_team_stats['Home_Percentile']) if 'Home_Percentile' in home_team_stats.index else 0
+                'HS': float(home_team_stats.get('HS', 0)),
+                'HST': float(home_team_stats.get('HST', 0)),
+                'HC': float(home_team_stats.get('HC', 0)),
+                'HF': float(home_team_stats.get('HF', 0)),
+                'HY': float(home_team_stats.get('HY', 0)),
+                'HR': float(home_team_stats.get('HR', 0)),
+                'Home_Percentile': float(home_team_stats.get('Home_Percentile', 0))
             },
             'away_stats': {
-                'AS': float(away_team_stats['AS']) if 'AS' in away_team_stats.index else 0,
-                'AST': float(away_team_stats['AST']) if 'AST' in away_team_stats.index else 0,
-                'AC': float(away_team_stats['AC']) if 'AC' in away_team_stats.index else 0,
-                'AF': float(away_team_stats['AF']) if 'AF' in away_team_stats.index else 0,
-                'AY': float(away_team_stats['AY']) if 'AY' in away_team_stats.index else 0,
-                'Away_Percentile': float(away_team_stats['Away_Percentile']) if 'Away_Percentile' in away_team_stats.index else 0
+                'AS': float(away_team_stats.get('AS', 0)),
+                'AST': float(away_team_stats.get('AST', 0)),
+                'AC': float(away_team_stats.get('AC', 0)),
+                'AF': float(away_team_stats.get('AF', 0)),
+                'AY': float(away_team_stats.get('AY', 0)),
+                'AR': float(away_team_stats.get('AR', 0)),
+                'Away_Percentile': float(away_team_stats.get('Away_Percentile', 0))
             }
         }
         
