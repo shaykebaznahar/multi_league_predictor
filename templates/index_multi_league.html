@@ -482,18 +482,18 @@
             document.getElementById('probabilities').innerHTML = `
                 <div class="probability-card">
                     <div class="prob-label">🏟️ Home Win</div>
-                    <div class="prob-value">${(probs.H * 100).toFixed(1)}%</div>
-                    <div class="prob-bar"><div class="prob-fill prob-home" style="width: ${probs.H * 100}%"></div></div>
+                    <div class="prob-value">${probs.H.toFixed(1)}%</div>
+                    <div class="prob-bar"><div class="prob-fill prob-home" style="width: ${probs.H}%"></div></div>
                 </div>
                 <div class="probability-card">
                     <div class="prob-label">🤝 Draw</div>
-                    <div class="prob-value">${(probs.D * 100).toFixed(1)}%</div>
-                    <div class="prob-bar"><div class="prob-fill prob-draw" style="width: ${probs.D * 100}%"></div></div>
+                    <div class="prob-value">${probs.D.toFixed(1)}%</div>
+                    <div class="prob-bar"><div class="prob-fill prob-draw" style="width: ${probs.D}%"></div></div>
                 </div>
                 <div class="probability-card">
                     <div class="prob-label">🚗 Away Win</div>
-                    <div class="prob-value">${(probs.A * 100).toFixed(1)}%</div>
-                    <div class="prob-bar"><div class="prob-fill prob-away" style="width: ${probs.A * 100}%"></div></div>
+                    <div class="prob-value">${probs.A.toFixed(1)}%</div>
+                    <div class="prob-bar"><div class="prob-fill prob-away" style="width: ${probs.A}%"></div></div>
                 </div>
             `;
 
