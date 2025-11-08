@@ -17,10 +17,11 @@ stats_folder = 'stats'
 print("📂 Loading models and stats...")
 
 try:
-    all_stats_df = pd.read_csv(os.path.join(stats_folder, 'all_leagues_2005_2024.csv'))
-    print(f"✅ Loaded combined stats file: {all_stats_df.shape[0]} rows")
+    current_file = os.path.join(stats_folder, 'All_Matches_current_with_Percentiles_2025_Current.xlsx')
+    all_stats_df = pd.read_excel(current_file)
+    print(f"✅ Loaded current stats file: {all_stats_df.shape[0]} rows")
 except Exception as e:
-    print(f"❌ Error loading combined stats: {e}")
+    print(f"❌ Error loading current stats: {e}")
     all_stats_df = None
 
 for model_file in os.listdir(models_folder):
@@ -62,7 +63,7 @@ for model_file in os.listdir(models_folder):
                     else:
                         print(f"⚠️  {league}: No stats with percentiles found")
                 else:
-                    print(f"⚠️  {league}: No stats found in combined file")
+                    print(f"⚠️  {league}: No stats found")
         except Exception as e:
             print(f"❌ {league}: Error - {str(e)}")
 
@@ -159,22 +160,22 @@ def predict(league):
                 'A': round(prob_away * 100, 1)
             },
             'home_stats': {
-                'HS': float(home_team_stats.get('HS', 0)),
-                'HST': float(home_team_stats.get('HST', 0)),
-                'HC': float(home_team_stats.get('HC', 0)),
-                'HF': float(home_team_stats.get('HF', 0)),
-                'HY': float(home_team_stats.get('HY', 0)),
-                'HR': float(home_team_stats.get('HR', 0)),
-                'Home_Percentile': float(home_team_stats.get('Home_Percentile', 0))
+                'HS': round(float(home_team_stats.get('HS', 0)), 1),
+                'HST': round(float(home_team_stats.get('HST', 0)), 1),
+                'HC': round(float(home_team_stats.get('HC', 0)), 1),
+                'HF': round(float(home_team_stats.get('HF', 0)), 1),
+                'HY': round(float(home_team_stats.get('HY', 0)), 1),
+                'HR': round(float(home_team_stats.get('HR', 0)), 1),
+                'Home_Percentile': round(float(home_team_stats.get('Home_Percentile', 0)), 1)
             },
             'away_stats': {
-                'AS': float(away_team_stats.get('AS', 0)),
-                'AST': float(away_team_stats.get('AST', 0)),
-                'AC': float(away_team_stats.get('AC', 0)),
-                'AF': float(away_team_stats.get('AF', 0)),
-                'AY': float(away_team_stats.get('AY', 0)),
-                'AR': float(away_team_stats.get('AR', 0)),
-                'Away_Percentile': float(away_team_stats.get('Away_Percentile', 0))
+                'AS': round(float(away_team_stats.get('AS', 0)), 1),
+                'AST': round(float(away_team_stats.get('AST', 0)), 1),
+                'AC': round(float(away_team_stats.get('AC', 0)), 1),
+                'AF': round(float(away_team_stats.get('AF', 0)), 1),
+                'AY': round(float(away_team_stats.get('AY', 0)), 1),
+                'AR': round(float(away_team_stats.get('AR', 0)), 1),
+                'Away_Percentile': round(float(away_team_stats.get('Away_Percentile', 0)), 1)
             }
         }
         
