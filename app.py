@@ -139,9 +139,9 @@ def predict(league):
             'away_team': away_team,
             'prediction': pred[0],
             'probabilities': {
-                'H': prob_home,
-                'D': prob_draw,
-                'A': prob_away
+                'H': round(prob_home * 100, 1),
+                'D': round(prob_draw * 100, 1),
+                'A': round(prob_away * 100, 1)
             },
             'home_stats': {
                 'HS': float(home_team_stats['HS']),
