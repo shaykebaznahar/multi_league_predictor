@@ -20,12 +20,15 @@ try:
     stats_file = os.path.join(stats_folder, 'all_leagues_2005_2024.csv')
     all_stats_df = pd.read_csv(stats_file)
     print(f"✅ Loaded stats file: {all_stats_df.shape[0]} rows")
+    print(f"📊 Columns: {list(all_stats_df.columns)}")
     
     if 'Season' in all_stats_df.columns:
         latest_season = all_stats_df['Season'].max()
         print(f"✅ Latest season: {latest_season}")
         all_stats_df = all_stats_df[all_stats_df['Season'] == latest_season]
         print(f"✅ Filtered to season {latest_season}: {all_stats_df.shape[0]} rows")
+    else:
+        print(f"⚠️  No 'Season' column found. Using all data.")
 except Exception as e:
     print(f"❌ Error loading stats: {e}")
     all_stats_df = None
@@ -198,3 +201,25 @@ def get_leagues():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
+```
+
+---
+
+## 🎯 **Clear Cache בRender:**
+```
+1. https://dashboard.render.com
+2. בחר את Service: multi-league-predictor
+3. Settings (בעמודה הימנית)
+4. Scroll Down
+5. בחר: "Clear build cache and redeploy"
+6. או: "Clear all resources" + "Deploy"
+```
+
+---
+
+**או דרך פשוטה:**
+```
+1. https://dashboard.render.com
+2. בחר את Service
+3. Manual Deploy
+4. בחר: "Clear build cache and deploy"
